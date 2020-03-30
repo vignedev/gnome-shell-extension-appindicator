@@ -33,6 +33,9 @@ var IconCache = Extension.imports.iconCache;
 const Util = Extension.imports.util;
 const Interfaces = Extension.imports.interfaces;
 
+// workaround from https://github.com/ubuntu/gnome-shell-extension-appindicator/issues/171#issuecomment-601121335
+const UpdateBlacklist = ["discord1"];
+
 const SNICategory = {
     APPLICATION: 'ApplicationStatus',
     COMMUNICATIONS: 'Communications',
@@ -217,16 +220,26 @@ var AppIndicator = class AppIndicators_AppIndicator {
 
             // all these can mean that the icon has to be changed
             if (property == 'Status' || property.substr(0, 4) == 'Icon' || property.substr(0, 13) == 'AttentionIcon')
-                this.emit('icon')
+                if (UpdateBlacklist.includes(this.id))
+                    Util.Logger.debug("Blacklisted icon ignored: ", this.id)
+                else
+                    this.emit('icon')
 
             // same for overlays
             if (property.substr(0, 11) == 'OverlayIcon')
-                this.emit('overlay-icon')
+                if (UpdateBlacklist.includes(this.id))
+                    Util.Logger.debug("Blacklisted icon ignored: ", this.id)
+                else
+                    this.emit('overlay-icon')
 
             // this may make all of our icons invalid
             if (property == 'IconThemePath') {
-                this.emit('icon')
-                this.emit('overlay-icon')
+                if (UpdateBlacklist.includes(this.id))
+                    Util.Logger.debug("Blacklisted icon ignored: ", this.id)
+                else {
+                    this.emit('icon')
+                    this.emit('overlay-icon')
+                }
             }
 
             // the label will be handled elsewhere
